@@ -31,7 +31,7 @@
             line-height: 1.6;
         }
 
-        /* 背景效果 */
+        /* --- 背景層 --- */
         #particleCanvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -3; pointer-events: none; }
         .grid-bg {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -47,7 +47,7 @@
             z-index: -1; pointer-events: none;
         }
 
-        /* 導航欄 - 已移除下載按鈕 */
+        /* --- 導航欄 (移除下載鈕) --- */
         header {
             position: fixed; top: 0; width: 100%; height: 72px;
             background: rgba(5, 5, 5, 0.8); backdrop-filter: blur(24px);
@@ -63,7 +63,7 @@
         .header-actions .dc-link { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; }
         .header-actions .dc-link:hover { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
 
-        /* Hero */
+        /* --- Hero 區 --- */
         @keyframes revealUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; }
         .hero-label {
@@ -86,7 +86,7 @@
         }
         .btn-hero:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 20px 50px rgba(255,255,255,0.25); }
 
-        /* Features */
+        /* --- 特色區塊 --- */
         .container { max-width: 1300px; margin: 0 auto; padding: 0 40px; }
         .feature-block { 
             display: grid; grid-template-columns: 1.2fr 1fr; gap: 100px; align-items: center; padding: 140px 0; 
@@ -100,24 +100,30 @@
         .feature-visual { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: 0.5s; }
         .feature-visual img { width: 100%; display: block; }
 
-        /* Bento Grid & Counter Fix */
+        /* --- Bento 卡片 & 數字尺寸修正 --- */
         .bento-section { padding: 120px 0; }
         .bento-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .bento-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 48px; transition: 0.4s var(--transition); }
         .bento-card span { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
         
-        /* 核心修復：確保計數器與單位在同一水平線上且居中 */
+        /* 核心修復：強制數字與文字等大，絕對禁止縮小 */
         .bento-card h3 { 
-            font-size: 56px; font-weight: 800; margin: 16px 0; letter-spacing: -3px;
-            display: flex; justify-content: center; align-items: baseline; gap: 0;
+            font-size: 64px; font-weight: 800; margin: 16px 0; letter-spacing: -3px; line-height: 1;
+            display: flex; justify-content: center; align-items: center;
         }
-        .counter { font-size: inherit; font-weight: inherit; }
+        .counter { 
+            font-size: 64px !important; /* 強制大小 */
+            font-weight: 800 !important; 
+            display: inline-block; 
+            line-height: 1;
+            vertical-align: middle;
+        }
 
         .bento-card p { color: var(--text-dim); font-size: 14px; }
         .bento-card.dark { background: #fff; color: #000; text-align: center; }
         .bento-card.dark span, .bento-card.dark p { color: rgba(0,0,0,0.5); }
 
-        /* FAQ */
+        /* --- FAQ --- */
         .faq-section { max-width: 800px; margin: 140px auto; padding: 0 40px; }
         .faq-section h2 { font-size: 56px; text-align: center; margin-bottom: 80px; letter-spacing: -3px; }
         .faq-item { border-bottom: 1px solid var(--border); padding: 32px 0; cursor: pointer; }
@@ -130,6 +136,7 @@
         .faq-a { max-height: 0; overflow: hidden; transition: 0.5s var(--transition); color: var(--text-dim); font-size: 17px; }
         .faq-item.active .faq-a { max-height: 200px; margin-top: 24px; padding-bottom: 10px; }
 
+        /* --- Footer --- */
         footer { padding: 100px 40px; border-top: 1px solid var(--border); text-align: center; background: #000; }
         .footer-logo { font-weight: 800; font-size: 20px; margin-bottom: 24px; display: block; text-decoration: none; color: #fff; }
         .footer-links { display: flex; justify-content: center; gap: 40px; margin-bottom: 48px; }
@@ -168,19 +175,17 @@
     <section class="hero">
         <div class="hero-label">High-Performance Runtime</div>
         <h1>Taiwan's Premier<br>Execution Engine</h1>
-        <p>A specialized architecture built for elite speed, unmatched stealth, and a seamless developer workflow. Experience the next evolution of script execution.</p>
+        <p>A specialized architecture built for elite speed, unmatched stealth, and a seamless developer workflow.</p>
         <a href="https://work.ink/26Yy/Spectra" class="btn-hero">Download Now</a>
     </section>
 
     <div class="container" id="features">
         <div class="feature-block scroll-reveal">
-            <div class="feature-visual">
-                <img src="UI.png" alt="Workspace Editor">
-            </div>
+            <div class="feature-visual"><img src="UI.png" alt="Workspace"></div>
             <div class="feature-text">
                 <span class="tag">Environment</span>
                 <h2>The Unified Workspace</h2>
-                <p>The core of Spectra is a high-performance environment designed for seamless code manipulation. Featuring ultra-low latency input, real-time syntax highlighting, and an integrated console.</p>
+                <p>High-performance environment designed for seamless code manipulation with surgical precision.</p>
             </div>
         </div>
 
@@ -188,22 +193,9 @@
             <div class="feature-text">
                 <span class="tag">Centralized Hub</span>
                 <h2>Script Library V3</h2>
-                <p>Access an infinite repository of community-driven tools directly within the dashboard. Our Script Hub organizes thousands of assets into a searchable interface.</p>
+                <p>Access an infinite repository of community-driven tools directly within the dashboard.</p>
             </div>
-            <div class="feature-visual">
-                <img src="UI2.png" alt="Script Management">
-            </div>
-        </div>
-
-        <div class="feature-block scroll-reveal">
-            <div class="feature-visual">
-                <img src="UI3.png" alt="Advanced Config">
-            </div>
-            <div class="feature-text">
-                <span class="tag">Core Engine</span>
-                <h2>System Configuration</h2>
-                <p>Power is nothing without control. Spectra’s configuration suite allows you to fine-tune every aspect of your experience—from kernel-level stealth to auto-injection.</p>
-            </div>
+            <div class="feature-visual"><img src="UI2.png" alt="Script Hub"></div>
         </div>
     </div>
 
@@ -273,7 +265,7 @@
     </footer>
 
     <script>
-        // 滾動與計數器
+        // --- 滾動與計數器腳本 ---
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -303,7 +295,7 @@
             update();
         }
 
-        // FAQ 切換
+        // --- FAQ 切換 ---
         document.querySelectorAll('.faq-item').forEach(item => {
             item.addEventListener('click', () => {
                 const isActive = item.classList.contains('active');
@@ -312,11 +304,10 @@
             });
         });
 
-        // 粒子背景
+        // --- 背景粒子 ---
         const canvas = document.getElementById('particleCanvas');
         const ctx = canvas.getContext('2d');
         let particlesArray = [];
-
         function setSize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         setSize();
         window.addEventListener('resize', setSize);
