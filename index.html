@@ -1,16 +1,353 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>SPECTRA</title>
+    <link rel="icon" type="image/png" href="Spectra.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SYSTEM TERMINATED</title>
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #111111;
+            --accent: #ffffff;
+            --text-main: #ffffff;
+            --text-dim: #86868b;
+            --border: rgba(255, 255, 255, 0.12);
+            --radius-lg: 32px;
+            --radius-sm: 12px;
+            --transition: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+        html { scroll-behavior: smooth; }
+        body { background-color: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+        /* --- 背景粒子畫布 --- */
+        #particleCanvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -2; pointer-events: none;
+        }
+
+        /* --- 延遲1秒的游標光 --- */
+        .cursor-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            /* 實現1秒延遲跟隨 */
+            transition: left 1s cubic-bezier(0.23, 1, 0.32, 1), top 1s cubic-bezier(0.23, 1, 0.32, 1);
+            left: -500px; top: -500px;
+        }
+
+        .glow {
+            position: fixed; top: -10%; left: 50%; transform: translateX(-50%);
+            width: 80vw; height: 60vh;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- Navigation --- */
+        header {
+            position: fixed; top: 0; width: 100%; height: 64px;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(25px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; z-index: 1000;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; font-weight: 700; font-size: 20px; }
+        .logo img { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; }
+        
+        nav { display: flex; gap: 35px; }
+        nav a { text-decoration: none; color: var(--text-dim); font-size: 13px; font-weight: 500; transition: 0.3s; }
+        nav a:hover { color: #fff; }
+
+        .header-actions { display: flex; align-items: center; gap: 20px; }
+        .header-actions .dc-link { color: var(--text-dim); text-decoration: none; font-size: 13px; transition: 0.3s; }
+        .header-actions .dc-link:hover { color: #fff; }
+
+        /* --- Hero Section & Staircase Animation --- */
+        @keyframes revealUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 20px; }
+        
+        .hero-label { 
+            font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--text-dim); margin-bottom: 20px; text-transform: uppercase; 
+            opacity: 0; animation: revealUp 0.8s var(--transition) forwards; animation-delay: 0.1s;
+        }
+        .hero h1 { 
+            font-size: clamp(56px, 12vw, 110px); font-weight: 800; letter-spacing: -5px; line-height: 0.95; margin-bottom: 30px; 
+            opacity: 0; animation: revealUp 0.8s var(--transition) forwards; animation-delay: 0.3s;
+        }
+        .hero p { 
+            max-width: 700px; color: var(--text-dim); font-size: clamp(18px, 2.5vw, 24px); line-height: 1.4; margin-bottom: 50px; font-weight: 400; 
+            opacity: 0; animation: revealUp 0.8s var(--transition) forwards; animation-delay: 0.5s;
+        }
+
+        /* 中間橢圓按鈕 */
+        .btn-main { 
+            background: #fff; color: #000; padding: 18px 45px; border-radius: 50px; font-size: 15px; font-weight: 700; text-decoration: none; 
+            transition: 0.3s; opacity: 0; animation: revealUp 0.8s var(--transition) forwards; animation-delay: 0.7s;
+            box-shadow: 0 10px 30px rgba(255,255,255,0.1);
+        }
+        .btn-main:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 15px 40px rgba(255,255,255,0.2); }
+
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 40px; }
+        
+        .feature-block { 
+            display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; 
+            padding: 120px 0; opacity: 0; transform: translateY(60px); transition: 1.2s var(--transition);
+        }
+        .feature-block.reveal { opacity: 1; transform: translateY(0); }
+        .feature-block.reverse { grid-template-columns: 1fr 1.2fr; }
+
+        .feature-text h2 { font-size: 48px; font-weight: 700; margin-bottom: 25px; letter-spacing: -2px; }
+        .feature-text p { color: var(--text-dim); font-size: 19px; line-height: 1.6; margin-bottom: 30px; }
+        .feature-tag { display: inline-block; padding: 4px 12px; border: 1px solid var(--border); border-radius: 100px; font-size: 11px; font-weight: 700; color: var(--text-dim); margin-bottom: 20px; }
+
+        .feature-visual { 
+            background: linear-gradient(145deg, #151515, #050505); 
+            border: 1px solid var(--border); border-radius: 5px; 
+            padding: 0; position: relative; overflow: hidden;
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.6);
+        }
+        .feature-visual img { width: 100%; border-radius: 5px; display: block; transition: 0.5s; }
+        .feature-visual:hover img { transform: scale(1.02); }
+
+        .bento-section { padding: 120px 0; }
+        .bento-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+        .bento-card { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); 
+            padding: 45px; transition: 0.5s; cursor: default;
+        }
+        .bento-card:hover { border-color: rgba(255,255,255,0.3); transform: translateY(-5px); }
+        .bento-card span { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .bento-card h3 { font-size: 64px; font-weight: 800; margin: 15px 0; letter-spacing: -3px; }
+        .bento-card p { color: var(--text-dim); font-size: 14px; line-height: 1.5; }
+        .bento-card.dark { background: #fff; color: #000; }
+        .bento-card.dark span, .bento-card.dark p { color: rgba(0,0,0,0.5); }
+
+        .faq-section { max-width: 900px; margin: 100px auto; padding: 0 40px; }
+        .faq-section h2 { font-size: 56px; text-align: center; margin-bottom: 80px; letter-spacing: -3px; }
+        .faq-item { border-bottom: 1px solid var(--border); padding: 35px 0; cursor: pointer; transition: 0.3s; }
+        .faq-q { display: flex; justify-content: space-between; align-items: center; font-size: 20px; font-weight: 600; }
+        .faq-icon { width: 24px; height: 24px; position: relative; transition: 0.4s; }
+        .faq-icon::before, .faq-icon::after { content: ''; position: absolute; background: #fff; border-radius: 2px; }
+        .faq-icon::before { width: 100%; height: 2px; top: 11px; }
+        .faq-icon::after { width: 2px; height: 100%; left: 11px; }
+        
+        .faq-item.active .faq-icon { transform: rotate(135deg); }
+        .faq-a { max-height: 0; overflow: hidden; transition: 0.5s var(--transition); color: var(--text-dim); font-size: 17px; margin-top: 0; }
+        .faq-item.active .faq-a { max-height: 200px; margin-top: 25px; }
+
+        footer { padding: 100px 40px; border-top: 1px solid var(--border); text-align: center; }
+        .footer-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 30px; opacity: 0.5; }
+        .footer-logo img { width: 24px; }
+        .copyright { color: #444; font-size: 12px; letter-spacing: 1px; }
+
+        @media (max-width: 1024px) {
+            .feature-block, .feature-block.reverse { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+            .feature-block.reverse .feature-text { order: -1; }
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .hero h1 { font-size: 64px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="overlay"></div>
-    <div class="main-container">
-        <button class="stop-btn">停止更新</button>
-        <div class="system-msg">DATABASE ACCESS DENIED / SYSTEM HALTED</div>
+
+    <canvas id="particleCanvas"></canvas>
+    <div class="cursor-glow" id="cursorGlow"></div>
+    <div class="glow"></div>
+
+    <header>
+        <a href="#" class="logo">
+            <img src="Spectra.png" alt="Spectra Logo">
+            <span>Spectra</span>
+        </a>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#specs">Specifications</a>
+            <a href="#faq">FAQ</a>
+        </nav>
+        <div class="header-actions">
+            <a href="https://discord.gg/7sq3xaHSWc" class="dc-link">Discord</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-label">Advanced Execution Architecture</div>
+        <h1>Taiwan #1 Executor<br>Designed to be the Best</h1>
+        <p>A specialized environment built for elite performance, unmatched stealth, and a seamless workflow. The future of execution is here.</p>
+        <a href="https://work.ink/26Yy/Spectra" class="btn-main">Download Now</a>
+    </section>
+
+    <div class="container" id="features">
+        <div class="feature-block scroll-reveal">
+            <div class="feature-visual">
+                <img src="UI.png" alt="Main Workspace">
+            </div>
+            <div class="feature-text">
+                <div class="feature-tag">Workspace</div>
+                <h2>The Ultimate Editor</h2>
+                <p>The heart of Spectra is a high-performance environment designed for seamless script manipulation. Featuring ultra-low latency input, real-time syntax highlighting, and an integrated console, it bridges the gap between your code and the game engine.</p>
+            </div>
+        </div>
+
+        <div class="feature-block reverse scroll-reveal">
+            <div class="feature-text">
+                <div class="feature-tag">Infinite Library</div>
+                <h2>Script Hub</h2>
+                <p>Access the world's largest repository of community-driven tools directly within Spectra. Our Script Hub organizes thousands of scripts into a clean, searchable interface. Discover, execute, and dominate instantly.</p>
+            </div>
+            <div class="feature-visual">
+                <img src="UI2.png" alt="Script Management">
+            </div>
+        </div>
     </div>
+
+    <section class="container bento-section" id="specs">
+        <div class="bento-grid">
+            <div class="bento-card scroll-reveal">
+                <span>UNC_Core</span>
+                <h3>99%</h3>
+                <p>Maximum compatibility with all modern APIs.</p>
+            </div>
+            <div class="bento-card scroll-reveal" style="transition-delay: 0.1s;">
+                <span>sUNC_Logic</span>
+                <h3>98%</h3>
+                <p>Proprietary logic VM for complex recursive instructions.</p>
+            </div>
+            <div class="bento-card scroll-reveal" style="transition-delay: 0.2s;">
+                <span>Stealth</span>
+                <h3>0%</h3>
+                <p>Zero-trace heuristic footprint using Ring-0 obfuscation.</p>
+            </div>
+            <div class="bento-card dark scroll-reveal" style="transition-delay: 0.3s;">
+                <span>Community</span>
+                <h3><span class="counter" data-target="17">0</span>K+</h3>
+                <p>Global users trusting Spectra daily.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="faq-section" id="faq">
+        <h2 class="scroll-reveal">Common Queries.</h2>
+        <div class="faq-item scroll-reveal">
+            <div class="faq-q">Is this 100% keyless forever? <div class="faq-icon"></div></div>
+            <div class="faq-a">Yes. Spectra V3 is engineered to be permanently keyless. We rely on community support to keep the core experience free for all users.</div>
+        </div>
+        <div class="faq-item scroll-reveal">
+            <div class="faq-q">Where does Spectra come from? <div class="faq-icon"></div></div>
+            <div class="faq-a">The Spectra team is from Taiwan and is the number one development team, possessing the most advanced technology.</div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="Spectra.png" alt="">
+            <span>SPECTRA Team</span>
+        </div>
+        <p class="copyright">© 2026 SPECTRA TECHNOLOGIES. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <script>
+        // --- 滾動顯現與計數器 ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal');
+                    const counter = entry.target.querySelector('.counter');
+                    if (counter && !counter.classList.contains('counted')) startCounter(counter);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+
+        function startCounter(el) {
+            const target = +el.getAttribute('data-target');
+            let count = 0;
+            const update = () => {
+                const speed = 2000 / target;
+                if (count < target) {
+                    count++;
+                    el.innerText = count;
+                    setTimeout(update, speed);
+                } else {
+                    el.innerText = target;
+                    el.classList.add('counted');
+                }
+            };
+            update();
+        }
+
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                if (!isActive) item.classList.add('active');
+            });
+        });
+
+        // --- 游標跟隨光 (帶延遲) ---
+        const glow = document.getElementById('cursorGlow');
+        document.addEventListener('mousemove', (e) => {
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+        });
+
+        // --- 粒子效果系統 ---
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particlesArray = [];
+
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 0.4 - 0.2;
+                this.speedY = Math.random() * 0.4 - 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0; else if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0; else if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particlesArray = [];
+            const particleCount = (canvas.width * canvas.height) / 10000;
+            for (let i = 0; i < particleCount; i++) particlesArray.push(new Particle());
+        }
+        initParticles();
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particlesArray.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
 </body>
 </html>
